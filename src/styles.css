@@ -237,3 +237,10 @@ code { background: #eef3f1; padding: 1px 5px; border-radius: 5px; font-size: 0.9
   background: #fff;
 }
 .ai-input:focus { outline: 2px solid rgba(15, 107, 92, 0.35); border-color: var(--primary); }
+
+/* ArUco SVG */
+.aruco-svg { width: 100%; max-width: 230px; height: auto; display: block; margin: 0 auto; background: #fff; }
+
+@media print {
+  .aruco-svg { width: 120mm; max-width: none; height: 120mm; }
+}

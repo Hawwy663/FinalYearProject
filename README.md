@@ -126,13 +126,20 @@ firebase functions:secrets:set DEEPSEEK_API_KEY --data-file key.txt   # 只需�
 firebase deploy --only functions
 ```
 
-**改路線之後重新出貼紙**（需要一次性 service account）
+**改路線之後**
+
+套用路線之後，`/admin/markers` **即時**用新路線重畫貼紙（網頁用 SVG 即時畫，位元圖來自
+`public/markers/dict-4x4-50.json`，由 OpenCV 匯出，所以同無人機同一套字典）。
+已驗證：網頁畫出的 6 張 SVG 用 OpenCV 重新偵測，回傳 ID `0,1,2,3,4,5` → 完全一致。
+
+無人機需要的 `markers.json`（markerId → zone + move）按 **「⬇️ markers.json」** 下載，
+放入 `tools/drone/` 就完成同步 —— **唔需要 service account**。
+
+如果仍然想用 Python 產生 PNG／PDF 版本（例如交報告要 printer-ready）：
 
 ```powershell
-# 1. Firebase console → 專案設定 → 服務帳戶 → 產生新的私密金鑰
-# 2. 指向該 JSON
-$env:GOOGLE_APPLICATION_CREDENTIALS = "C:\path\serviceAccount.json"
-python tools/drone/gen_markers.py --from-firestore
+python tools/drone/gen_markers.py                     # 內建路線
+python tools/drone/gen_markers.py --from-firestore    # Firestore 路線（需 service account）
 ```
 
 ## 資料模型

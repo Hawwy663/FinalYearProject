@@ -1,25 +1,75 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import AppBar from '../components/AppBar';
-import { app } from '../firebase';
+import { app, db } from '../firebase';
 
 /**
  * ArUco 貼紙頁 + DeepSeek 路線生成。
  *
- * 流程：
- *   1. 管理員用自然語言描述路線（例：「一樓兩個平台，然後上二樓，最後三樓降落」）
- *   2. Cloud Function 呼叫 deepseek-flash，回傳嚴格 JSON（zone / markerId / action / move）
- *   3. 「套用」→ 寫入 Firestore `zones`
- *   4. 落本機執行 `python tools/drone/gen_markers.py --from-firestore` 重新產生貼紙
+ * 貼紙由網頁即時畫（SVG），位元圖來自 `public/markers/dict-4x4-50.json`
+ * （由 OpenCV 匯出，所以同無人機偵測的字典完全一致）。
+ * 好處：AI 生成路線 → 套用 → 貼紙即刻更新，唔需要 service account、唔需要跑 Python。
  *
- * 為何唔由瀏覽器直接 call DeepSeek：API key 會 expose；而且 DeepSeek 唔支援 browser CORS。
- * Key 只存在 Google Secret Manager，由 Cloud Function 代呼叫。
+ * 無人機需要的 `markers.json`（markerId → zone + move）可以一鍵下載。
  */
 const EXAMPLE = '一樓平台 1 同平台 2 都要巡查，跟住上二樓兩個平台，最後上三樓降落。每站前進 120cm，上樓 80cm。';
+const QUIET_ZONE = 2;
+const MARKER_SIZE_M = 0.08;
+
+function useDict() {
+  const [dict, setDict] = useState(null);
+  useEffect(() => {
+    fetch('/markers/dict-4x4-50.json')
+      .then((res) => res.json())
+      .then(setDict)
+      .catch(() => setDict(null));
+  }, []);
+  return dict;
+}
+
+function MarkerSvg({ dict, markerId, label }) {
+  const code = dict?.codes?.[markerId];
+  if (!code) return <div className="qr-placeholder" />;
+
+  const modules = dict.modules; // 6
+  const total = modules + QUIET_ZONE * 2; // 10
+  const cells = [];
+  for (let row = 0; row < modules; row += 1) {
+    for (let col = 0; col < modules; col += 1) {
+      if (code[row * modules + col] === '1') {
+        cells.push(
+          <rect
+            key={`${row}-${col}`}
+            x={col + QUIET_ZONE}
+            y={row + QUIET_ZONE}
+            width={1}
+            height={1}
+            fill="#000"
+          />,
+        );
+      }
+    }
+  }
+
+  return (
+    <svg
+      className="aruco-svg"
+      viewBox={`0 0 ${total} ${total}`}
+      role="img"
+      aria-label={`${label} ArUco ID ${markerId}`}
+      shapeRendering="crispEdges"
+    >
+      <rect width={total} height={total} fill="#fff" />
+      {cells}
+    </svg>
+  );
+}
 
 export default function Markers() {
-  const [data, setData] = useState(null);
-  const [error, setError] = useState('');
+  const dict = useDict();
+  const [zones, setZones] = useState([]);
+  const [zonesError, setZonesError] = useState('');
 
   const [prompt, setPrompt] = useState('');
   const [generating, setGenerating] = useState(false);
@@ -28,17 +78,20 @@ export default function Markers() {
   const [aiError, setAiError] = useState('');
   const [notice, setNotice] = useState('');
 
+  // 直接監聽 Firestore zones：AI 套用後貼紙即刻更新
   useEffect(() => {
-    fetch('/markers/markers.json')
-      .then((res) => {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.json();
-      })
-      .then(setData)
-      .catch((err) => setError('讀取 marker 資料失敗：' + err.message));
+    const q = query(collection(db, 'zones'), orderBy('seq', 'asc'));
+    return onSnapshot(
+      q,
+      (snap) => {
+        setZones(snap.docs.map((d) => ({ zoneId: d.id, ...d.data() })));
+        setZonesError('');
+      },
+      (err) => setZonesError('讀取巡查點失敗：' + err.message),
+    );
   }, []);
 
-  const zones = data?.zones ?? [];
+  const sorted = useMemo(() => [...zones].sort((a, b) => (a.seq ?? 0) - (b.seq ?? 0)), [zones]);
 
   async function generate(apply = false) {
     setAiError('');
@@ -49,11 +102,7 @@ export default function Markers() {
       const call = httpsCallable(functions, 'generateRoute', { timeout: 120000 });
       const result = await call({ prompt: prompt.trim(), apply });
       setRoute(result.data);
-      if (apply) {
-        setNotice(
-          `已套用 ${result.data.steps.length} 個巡查點。落本機執行：python tools/drone/gen_markers.py --from-firestore`,
-        );
-      }
+      if (apply) setNotice(`已套用 ${result.data.steps.length} 個巡查點，下面貼紙已即時更新。`);
     } catch (err) {
       console.error(err);
       setAiError(err.message || 'AI 生成失敗');
@@ -61,6 +110,31 @@ export default function Markers() {
       setGenerating(false);
       setApplying(false);
     }
+  }
+
+  function downloadMarkersJson() {
+    const payload = {
+      dictionary: 'DICT_4X4_50',
+      markerSizeM: MARKER_SIZE_M,
+      quietZoneModules: QUIET_ZONE,
+      zones: sorted.map((z) => ({
+        zoneId: z.zoneId,
+        markerId: z.markerId,
+        seq: z.seq,
+        floor: z.floor,
+        label: z.label,
+        action: z.action,
+        nextZone: z.nextZone ?? '',
+        move: z.move ?? { forward: 0, right: 0, up: 0 },
+      })),
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'markers.json';
+    link.click();
+    URL.revokeObjectURL(url);
   }
 
   return (
@@ -73,8 +147,8 @@ export default function Markers() {
         <div className="card no-print">
           <h3>用 AI 生成路線</h3>
           <p className="muted small">
-            用一句話描述巡查路線，deepseek-flash 會轉成「每個巡查點 / ArUco ID / 下一步動作」。
-            套用之後重新產生貼紙即可。
+            用一句話描述路線，deepseek-flash 會轉成「每個巡查點 / ArUco ID / 動作 / 位移」。
+            撳「套用至系統」後，下面貼紙會即時用新路線畫出嚟。
           </p>
           <textarea
             className="ai-input"
@@ -158,23 +232,27 @@ export default function Markers() {
             <div>
               <h3>樓梯間 ArUco 標記</h3>
               <p className="muted small">
-                共 {zones.length} 個巡查點（{data?.dictionary ?? 'DICT_4X4_50'} · 黑格{' '}
-                {data ? Math.round(data.markerSizeM * 1000) : 80}mm）。撳掣直接列印，貼在平台牆身，
-                建議高度 1.2–1.5m、正對鏡頭、避免反光。
+                共 {sorted.length} 個巡查點（DICT_4X4_50 · 黑格 {MARKER_SIZE_M * 1000}mm）。
+                撳掣直接列印，貼在平台牆身，建議高度 1.2–1.5m、正對鏡頭、避免反光。
               </p>
             </div>
-            <button type="button" className="btn btn-primary" onClick={() => window.print()} disabled={!zones.length}>
-              🖨️ 全部列印
-            </button>
+            <div className="row gap wrap">
+              <button type="button" className="btn btn-ghost" onClick={downloadMarkersJson} disabled={!sorted.length}>
+                ⬇️ markers.json
+              </button>
+              <button type="button" className="btn btn-primary" onClick={() => window.print()} disabled={!sorted.length}>
+                🖨️ 全部列印
+              </button>
+            </div>
           </div>
-          {error ? <p className="alert alert-error">{error}</p> : null}
-          {!zones.length && !error ? <p className="muted">載入中…</p> : null}
+          {zonesError ? <p className="alert alert-error">{zonesError}</p> : null}
+          {!sorted.length && !zonesError ? <p className="muted">載入中…</p> : null}
         </div>
 
         <div className="qr-sheet">
-          {zones.map((z) => (
+          {sorted.map((z) => (
             <div key={z.zoneId} className="qr-cell">
-              <img src={`/markers/${z.zoneId}.png`} alt={`${z.floor} ${z.label} ArUco`} />
+              <MarkerSvg dict={dict} markerId={z.markerId} label={z.label || z.zoneId} />
               <div className="qr-floor">{z.floor}</div>
               <div className="qr-label">{z.label}</div>
               <div className="qr-id">
@@ -190,8 +268,8 @@ export default function Markers() {
         </div>
 
         <p className="muted small no-print">
-          改路線之後重新產生：`python tools/drone/gen_markers.py --from-firestore`。貼紙尺寸必須同
-          markers.json 的 <code>markerSizeM</code> 一致，否則距離估錯。
+          把下載到的 <code>markers.json</code> 放入 <code>tools/drone/</code>，無人機就會用同一份路線。
+          貼紙尺寸必須同 <code>markerSizeM</code>（{MARKER_SIZE_M}m）一致，否則距離估錯。
         </p>
       </main>
     </>

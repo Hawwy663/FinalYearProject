@@ -132,7 +132,7 @@ await shot(cdp, path.join(OUT, '02-admin.png'));
 
 // ArUco 貼紙頁
 await goto(`${BASE}/admin/markers`);
-await waitFor(cdp, `!!document.querySelector('.qr-cell img')`, 20000);
+await waitFor(cdp, `!!document.querySelector('.qr-cell svg, .qr-cell img')`, 20000);
 await sleep(1500);
 await shot(cdp, path.join(OUT, '06-markers.png'));
 
