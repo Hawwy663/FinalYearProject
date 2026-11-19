@@ -1,12 +1,12 @@
-# ä¾è³´
+# 依賴
 node_modules/
 
-# å»ºç½®ç”¢ç‰©
+# 建置產物
 dist/
 build/
 .cache/
 
-# ç’°å¢ƒè®Šæ•¸ï¼ˆå« Firebase è¨­å®šï¼‰
+# 環境變數（含 Firebase 設定）
 .env
 .env.local
 
@@ -16,7 +16,7 @@ firebase-debug.log
 firestore-debug.log
 ui-debug.log
 
-# ç·¨è¼¯å™¨ / ç³»çµ±
+# 編輯器 / 系統
 .vscode/
 .idea/
 Thumbs.db
@@ -24,9 +24,10 @@ desktop.ini
 .DS_Store
 *.log
 
-# æ¨¡åž‹æ¬Šé‡ï¼ˆå¦‚è¦å…¥ repo è«‹è‡ªè¡Œç§»é™¤å‘¢è¡Œï¼‰
-# *.pt
-
 # 截圖 / 臨時檔
 shots/
 .tmp/
+
+# 地面站執行時產生的檔案
+tools/drone/outbox.jsonl
+tools/drone/__pycache__/

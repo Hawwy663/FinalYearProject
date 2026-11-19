@@ -7,6 +7,7 @@ import StaffHome from './pages/StaffHome';
 import AdminDashboard from './pages/AdminDashboard';
 import RecordDetail from './pages/RecordDetail';
 import PrintNotice from './pages/PrintNotice';
+import QrPrint from './pages/QrPrint';
 
 function HomeRedirect() {
   const { user, role, loading } = useAuth();
@@ -44,6 +45,14 @@ export default function App() {
             element={
               <RequireRole roles={['admin']}>
                 <AdminDashboard />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="/admin/qr"
+            element={
+              <RequireRole roles={['admin']}>
+                <QrPrint />
               </RequireRole>
             }
           />

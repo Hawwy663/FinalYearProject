@@ -61,5 +61,23 @@ service cloud.firestore {
 
       allow update, delete: if false;
     }
+
+    // 巡查點（每張 QR Code 對應一個 zone）
+    // 只准經 Admin SDK / 種子腳本建立，避免保安誤改飛行路線
+    match /zones/{zoneId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    // 無人機執行紀錄（地面站用 Admin SDK 寫；客端只讀）
+    match /runs/{runId} {
+      allow read: if signedIn();
+      allow write: if false;
+
+      match /steps/{stepId} {
+        allow read: if signedIn();
+        allow write: if false;
+      }
+    }
   }
 }

@@ -210,3 +210,22 @@ code { background: #eef3f1; padding: 1px 5px; border-radius: 5px; font-size: 0.9
   .page { max-width: none; padding: 0; }
   .notice-paper { border: none; box-shadow: none; margin: 0; padding: 0; max-width: none; }
 }
+
+/* ── QR 貼紙列印 ───────────────────────────────────────── */
+.qr-sheet { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.qr-cell {
+  border: 1px dashed #9aa5a2; padding: 14px; text-align: center; background: #fff;
+  break-inside: avoid; page-break-inside: avoid;
+}
+.qr-cell img { width: 100%; max-width: 230px; height: auto; display: block; margin: 0 auto; }
+.qr-floor { font-size: 22px; font-weight: 800; margin-top: 8px; letter-spacing: 1px; }
+.qr-label { font-size: 14px; color: #333; }
+.qr-id { font-size: 12px; color: #666; margin-top: 2px; }
+.qr-payload { font-size: 9px; color: #999; margin-top: 6px; font-family: Consolas, monospace; word-break: break-all; }
+.qr-placeholder { height: 230px; background: #eee; }
+
+@media print {
+  .qr-sheet { gap: 0; }
+  .qr-cell { border: 1px solid #bbb; }
+  .qr-payload { color: #777; }
+}

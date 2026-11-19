@@ -1,0 +1,6 @@
+djitellopy==2.5.0
+opencv-python==4.10.0.84
+numpy>=1.26
+qrcode==8.0
+Pillow>=10.0
+firebase-admin==6.5.0

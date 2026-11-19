@@ -8,11 +8,15 @@
     "build": "vite build",
     "preview": "vite preview",
     "test:rules": "firebase emulators:exec --only firestore,storage --project demo-fyp \"node test/rules.test.mjs\"",
+    "test:qr": "node --test test/qrPayload.test.mjs",
     "seed": "node scripts/seed.mjs",
+    "seed:zones": "node scripts/seed-zones.mjs",
+    "qr:sheet": "node scripts/make-qr-sheet.mjs",
     "deploy": "npm run build && firebase deploy"
   },
   "dependencies": {
     "firebase": "^11.10.0",
+    "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.1.5"
@@ -20,6 +24,7 @@
   "devDependencies": {
     "@firebase/rules-unit-testing": "^4.0.0",
     "@vitejs/plugin-react": "^4.3.4",
+    "firebase-admin": "^13.0.2",
     "vite": "^5.4.11"
   }
 }
