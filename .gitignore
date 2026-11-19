@@ -1,13 +1,32 @@
-# 系統 / 編輯器雜物
+# ä¾è³´
+node_modules/
+
+# å»ºç½®ç”¢ç‰©
+dist/
+build/
+.cache/
+
+# ç’°å¢ƒè®Šæ•¸ï¼ˆå« Firebase è¨­å®šï¼‰
+.env
+.env.local
+
+# Firebase / emulator
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# ç·¨è¼¯å™¨ / ç³»çµ±
+.vscode/
+.idea/
 Thumbs.db
 desktop.ini
 .DS_Store
 *.log
 
-# PHP / 編輯器
-.vscode/
-.idea/
+# æ¨¡åž‹æ¬Šé‡ï¼ˆå¦‚è¦å…¥ repo è«‹è‡ªè¡Œç§»é™¤å‘¢è¡Œï¼‰
+# *.pt
 
-# 依賴
-vendor/
-node_modules/
+# 截圖 / 臨時檔
+shots/
+.tmp/
