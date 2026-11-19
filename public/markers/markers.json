@@ -1,0 +1,55 @@
+{
+  "dictionary": "DICT_4X4_50",
+  "markerSizeM": 0.08,
+  "quietZoneModules": 2,
+  "zones": [
+    {
+      "zoneId": "B1F01L1",
+      "markerId": 0,
+      "seq": 1,
+      "floor": "1樓",
+      "label": "一樓平台 1",
+      "nextZone": "B1F01L2"
+    },
+    {
+      "zoneId": "B1F01L2",
+      "markerId": 1,
+      "seq": 2,
+      "floor": "1樓",
+      "label": "一樓平台 2",
+      "nextZone": "B1F02L1"
+    },
+    {
+      "zoneId": "B1F02L1",
+      "markerId": 2,
+      "seq": 3,
+      "floor": "2樓",
+      "label": "二樓平台 1",
+      "nextZone": "B1F02L2"
+    },
+    {
+      "zoneId": "B1F02L2",
+      "markerId": 3,
+      "seq": 4,
+      "floor": "2樓",
+      "label": "二樓平台 2",
+      "nextZone": "B1F03L1"
+    },
+    {
+      "zoneId": "B1F03L1",
+      "markerId": 4,
+      "seq": 5,
+      "floor": "3樓",
+      "label": "三樓平台 1",
+      "nextZone": "B1F03L2"
+    },
+    {
+      "zoneId": "B1F03L2",
+      "markerId": 5,
+      "seq": 6,
+      "floor": "3樓",
+      "label": "三樓平台 2",
+      "nextZone": ""
+    }
+  ]
+}

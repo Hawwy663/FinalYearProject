@@ -72,32 +72,31 @@ test/rules.test.mjs      rules 單元測試（emulator）
 
 ---
 
-## QR Code（無人機導航用）
+## ArUco 標記（無人機導航用）
 
-系統為每個巡查點產生一張 QR 貼紙，內含短字串：
+用 **ArUco `DICT_4X4_50`** 而唔係 QR：ArUco 可以做到 pose estimation，
+即係唔止認得「面前係 marker 0」，仲算得出**距離 1.2m、偏右 0.15m**，閉環飛近才可行。
 
-```
-FYP1|<zoneId>|<seq>|<action>|<nextZone>|<crc8>
-FYP1|B1F01L1|01|HOLD|B1F01L2|8F
-```
+- **保安零輸入**：`/admin/markers` 一頁列印全部 6 張貼紙，唔需要打任何字
+- 列印檔：[docs/aruco-sheet.pdf](docs/aruco-sheet.pdf)（6 張 A6，黑格 80mm）
+- 產生／改路線：`python tools/drone/gen_markers.py`（會同時更新 `public/markers/markers.json`）
+- 巡查點（zone）設定：`scripts/seed-zones.mjs`
 
-- **保安零輸入**：`/admin/qr` 一頁列印全部，唔需要打任何字
-- 已產生的列印檔：[docs/qr-sheet.pdf](docs/qr-sheet.pdf)（6 張 A6 貼紙）、單張 PNG 在 `docs/qr/`
-- 重新產生：`npm run qr:sheet`
-- 巡查點設定：`scripts/seed-zones.mjs`（需 `GOOGLE_APPLICATION_CREDENTIALS`）
+> 列印必須揀「實際大小 / 100%」。黑格印細了，距離會估細；`markers.json` 的 `markerSizeM` 必須同實物一致。
 
 無人機側（Tello Talent）在 `tools/drone/`：
 
 ```powershell
 cd tools\drone
 python -m pip install -r requirements.txt
-python scan_test.py --dir ..\..\docs\qr   # 驗證解碼，唔需要飛
-python qr_hop.py --camera 0               # 用 webcam 試
-python qr_hop.py --fly --takeoff          # 真飛（先讀 SAFETY.md）
+python gen_markers.py                    # 產生貼紙
+python aruco_test.py                     # 合成影像驗證距離/角度準確度（唔使飛）
+python aruco_nav.py --camera 0           # 用 webcam 試偵測
+python aruco_nav.py --fly --takeoff --approach   # 真飛並飛近 marker（先讀 SAFETY.md）
 ```
 
-解碼穩健度實測（`python robustness_test.py`）：QR 縮到 63px 寬、Gaussian 模糊 k=35、
-光度 12%、旋轉 5°–90° 都仍然解得到（多角度重試）。詳細見 `tools/drone/README.md`。
+實測（`aruco_test.py`，8cm 黑格、fx=900）：0.5–3m 距離誤差 ≤ ±2.5%、橫向誤差 <1cm、
+可偵測上限約 3.5m。詳細見 `tools/drone/README.md`。
 
 ## 資料模型
 

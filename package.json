@@ -8,14 +8,14 @@
     "build": "vite build",
     "preview": "vite preview",
     "test:rules": "firebase emulators:exec --only firestore,storage --project demo-fyp \"node test/rules.test.mjs\"",
-    "test:qr": "node --test test/qrPayload.test.mjs",
     "seed": "node scripts/seed.mjs",
     "seed:zones": "node scripts/seed-zones.mjs",
-    "qr:sheet": "node scripts/make-qr-sheet.mjs",
+    "markers": "python tools/drone/gen_markers.py",
     "deploy": "npm run build && firebase deploy"
   },
   "dependencies": {
     "firebase": "^11.10.0",
+    "js-aruco2": "^2.0.0",
     "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

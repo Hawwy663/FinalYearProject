@@ -78,8 +78,8 @@ export default function AdminDashboard() {
           <Link to="/staff" className="btn btn-ghost">
             員工端
           </Link>
-          <Link to="/admin/qr" className="btn btn-ghost">
-            QR Code
+          <Link to="/admin/markers" className="btn btn-ghost">
+            ArUco 貼紙
           </Link>
         </div>
 

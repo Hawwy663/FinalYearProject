@@ -130,11 +130,11 @@ await waitFor(cdp, `location.pathname === '/admin'`, 20000);
 await sleep(2500);
 await shot(cdp, path.join(OUT, '02-admin.png'));
 
-// QR Code 列印頁
-await goto(`${BASE}/admin/qr`);
+// ArUco 貼紙頁
+await goto(`${BASE}/admin/markers`);
 await waitFor(cdp, `!!document.querySelector('.qr-cell img')`, 20000);
 await sleep(1500);
-await shot(cdp, path.join(OUT, '06-qr.png'));
+await shot(cdp, path.join(OUT, '06-markers.png'));
 
 // 詳情頁（用有相片嘅 e2e 紀錄）
 const recordId = process.env.RECORD_ID;

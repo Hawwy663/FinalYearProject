@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8" />
+<title>樓梯間 ArUco 貼紙</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Microsoft JhengHei", "Segoe UI", sans-serif; background: #fff; color: #111; }
+  .sheet { display: grid; grid-template-columns: repeat(2, 1fr); }
+  .cell { border: 1px dashed #999; padding: 6mm; text-align: center; height: 148mm;
+           page-break-inside: avoid; break-inside: avoid;
+           display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .cell img { width: 120mm; height: 120mm; image-rendering: pixelated; }
+  .floor { font-size: 18pt; font-weight: 800; margin-top: 3mm; }
+  .label { font-size: 11pt; }
+  .meta { font-size: 8.5pt; color: #555; margin-top: 1mm; }
+  .warn { font-size: 9pt; color: #b33; padding: 4mm 6mm; }
+  @page { size: A4; margin: 4mm; }
+  @media print { .cell { border: 1px solid #ccc; } .warn { display: none; } }
+</style>
+</head>
+<body>
+  <div class="warn">列印設定：紙張 A4、縮放「實際大小 / 100%」（唔好揀「fit to page」），否則黑格尺寸唔對，距離會估錯。</div>
+  <div class="sheet">
+    <div class="cell">
+      <img src="../public/markers/B1F01L1.png" alt="1樓 一樓平台 1" />
+      <div class="floor">1樓</div>
+      <div class="label">一樓平台 1</div>
+      <div class="meta">ArUco ID 0 · B1F01L1 · 黑格 80mm</div>
+    </div>
+    <div class="cell">
+      <img src="../public/markers/B1F01L2.png" alt="1樓 一樓平台 2" />
+      <div class="floor">1樓</div>
+      <div class="label">一樓平台 2</div>
+      <div class="meta">ArUco ID 1 · B1F01L2 · 黑格 80mm</div>
+    </div>
+    <div class="cell">
+      <img src="../public/markers/B1F02L1.png" alt="2樓 二樓平台 1" />
+      <div class="floor">2樓</div>
+      <div class="label">二樓平台 1</div>
+      <div class="meta">ArUco ID 2 · B1F02L1 · 黑格 80mm</div>
+    </div>
+    <div class="cell">
+      <img src="../public/markers/B1F02L2.png" alt="2樓 二樓平台 2" />
+      <div class="floor">2樓</div>
+      <div class="label">二樓平台 2</div>
+      <div class="meta">ArUco ID 3 · B1F02L2 · 黑格 80mm</div>
+    </div>
+    <div class="cell">
+      <img src="../public/markers/B1F03L1.png" alt="3樓 三樓平台 1" />
+      <div class="floor">3樓</div>
+      <div class="label">三樓平台 1</div>
+      <div class="meta">ArUco ID 4 · B1F03L1 · 黑格 80mm</div>
+    </div>
+    <div class="cell">
+      <img src="../public/markers/B1F03L2.png" alt="3樓 三樓平台 2" />
+      <div class="floor">3樓</div>
+      <div class="label">三樓平台 2</div>
+      <div class="meta">ArUco ID 5 · B1F03L2 · 黑格 80mm</div>
+    </div>
+  </div>
+</body>
+</html>
