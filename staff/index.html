@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <!-- 這行非常重要：確保網頁在手機上能自動縮放，不會變成電腦版縮小版 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>操作無人機</title>
+    <link rel="stylesheet" href="../shared/style.css">
+    <style>
+        .floor-list { padding: 20px; border: 1px solid lightgray; margin-bottom: 20px; }
+        .floor-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .floor-btn { width: 60%; text-align: center; border: 1px solid dodgerblue; color: dodgerblue; padding: 12px 0; font-weight: bold; font-size: 16px; }
+        .status-text { font-size: 16px; font-weight: bold; width: 40%; text-align: right; }
+        .status-ok { color: yellowgreen; }
+        .status-fail { color: crimson; }
+        
+        /* 優化手機端按鈕排版：加大點擊區域，並保持兩列 */
+        .action-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .action-buttons button { width: 100%; padding: 15px 0; font-size: 16px; }
+    </style>
+</head>
+<body>
+<div class="container mobile-container">
+    <h2 id="date-title">巡查</h2>
+    
+    <div class="floor-list">
+        <div class="floor-item"><div class="floor-btn">一樓</div><div class="status-text status-ok">已完成</div></div>
+        <div class="floor-item"><div class="floor-btn">二樓</div><div class="status-text status-fail">未巡查</div></div>
+        <div class="floor-item"><div class="floor-btn">三樓</div><div class="status-text status-fail">未巡查</div></div>
+    </div>
+
+    <div class="action-buttons">
+        
+        <!-- 預計功能：發送無線電指令讓無人機起飛，開始執行各樓層的自動化巡查路線 -->
+        <button>開始巡查</button>
+        
+        <!-- 預計功能：將無人機本次拍攝的影像打包，透過發送至後端資料庫，並跳轉至結果頁 -->
+        <button onclick="uploadRecord()">上傳記錄</button>
+        
+        <!-- 預計功能：發送指令讓無人機原地懸停（Hover），停止前進以避開突發障礙物 -->
+        <button>暫停</button>
+        
+        <!-- 預計功能：發送指令讓無人機解除懸停，繼續沿著原本設定的巡查路線飛行 -->
+        <button>繼續</button>
+        
+    </div>
+</div>
+
+<script>
+    // 顯示今日日期
+    const today = new Date();
+    document.getElementById('date-title').innerText = `(${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}) 巡查`;
+
+    // 模擬上傳並寫入資料庫 (對應「上傳記錄」按鈕)
+    function uploadRecord() {
+        const formData = new FormData();
+        formData.append('floor', '1樓');
+        formData.append('image_url', 'https://picsum.photos/400/300?random=10');
+        formData.append('ai_detected', 'TRUE');
+
+        fetch('save_record.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // 成功則跳轉到結果頁面
+                window.location.href = 'upload_result.html?status=success';
+            } else {
+                // 失敗則跳轉到錯誤狀態
+                window.location.href = 'upload_result.html?status=fail';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            window.location.href = 'upload_result.html?status=fail';
+        });
+    }
+</script>
+</body>
+</html>

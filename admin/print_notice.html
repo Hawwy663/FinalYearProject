@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <title>列印通知</title>
+    <link rel="stylesheet" href="../shared/style.css">
+    <style>
+        .header-bar { display: flex; align-items: center; margin-bottom: 20px; border-bottom: 2px solid lightgray; padding-bottom: 10px; }
+        .back-btn { font-size: 30px; cursor: pointer; margin-right: 20px; color: dodgerblue;}
+        
+        /* 模擬 A4 紙張大小的通知單 */
+        .notice-paper { border: 2px dashed darkslategray; padding: 40px; background-color: white; max-width: 600px; margin: 0 auto; }
+        .notice-title { text-align: center; padding: 15px; margin-bottom: 30px; font-weight: bold; font-size: 24px; border-bottom: 2px solid black; }
+        .notice-content { padding: 15px; font-size: 18px; line-height: 2; margin-bottom: 20px; }
+        .sign-off { padding: 10px 20px; display: inline-block; font-weight: bold; border: 1px solid gray; margin-top: 30px;}
+        .print-btn-container { text-align: center; margin-top: 40px; }
+        
+        @media print {
+            body { background-color: white; padding: 0; }
+            .header-bar, .print-btn-container, .back-btn { display: none; }
+            .notice-paper { border: none; padding: 0; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header-bar">
+        <!-- 預計功能：返回詳情頁 -->
+        <div class="back-btn" onclick="window.location.href='record_detail.html'">⬅</div>
+        <h2 style="flex: 1; margin: 0; border: none; padding: 0;">通知單預覽</h2>
+    </div>
+
+    <div class="notice-paper">
+        <div class="notice-title">後樓梯雜物清理通知</div>
+        
+        <div class="notice-content">
+            致 貴住戶：<br><br>
+            本大廈管理處在進行日常無人機巡查時，於後樓梯發現堆放雜物，阻礙逃生通道。<br><br>
+            請於 <b>2026年10月25日</b> 前將雜物清理完畢，以確保大廈消防安全。<br><br>
+            如限期過後仍未清理，管理處將保留追究權利，並交由相關政府部門處理。
+        </div>
+
+        <div style="text-align: right;">
+            <div class="sign-off">XX大廈管理處 敬啟</div>
+        </div>
+    </div>
+
+    <div class="print-btn-container">
+        <!-- 預計功能：呼叫瀏覽器內建的列印功能，讓管理員印出實體紙張 -->
+        <button class="btn-cyan" style="font-size: 20px; padding: 15px 60px;" onclick="window.print()">🖨️ 確認列印</button>
+    </div>
+</div>
+</body>
+</html>
