@@ -48,10 +48,10 @@
     </div>
 
     <div class="action-btns">
-        <!-- 預計功能：將選擇的狀態寫回資料庫  -->
-        <button onclick="alert('狀態已更新！(樣本展示)')">更新狀態</button>
-        <!-- 預計功能：跳轉至列印通知頁面 -->
-        <button class="btn-cyan" onclick="window.location.href='print_notice.html'">生成紙本報告</button>
+        <!-- 將選擇的狀態寫回資料庫 -->
+        <button id="btn-update" onclick="updateStatus()">更新狀態</button>
+        <!-- 跳轉至列印通知頁面（帶同巡查ID） -->
+        <button class="btn-cyan" onclick="goPrint()">生成紙本報告</button>
     </div>
 </div>
 
@@ -59,25 +59,82 @@
     const urlParams = new URLSearchParams(window.location.search);
     const inspectionId = urlParams.get('id');
 
-    if(inspectionId) {
-        // 預計功能：直接發送請求拿取全部資料，並在前端篩選
-        fetch('get_inspections.php')
-        .then(res => res.json())
-        .then(data => {
-            const record = data.find(item => item['巡查ID'] === inspectionId);
-            if(record) {
-                document.getElementById('page-title').innerText = `${record['樓層']} 後樓梯 - 違規詳情`;
-                document.getElementById('detail-img').src = record['照片'];
-                document.getElementById('info-time').innerText = `上傳時間：${record['時間']}`;
-                document.getElementById('info-status').innerText = `處理狀態：${record['狀態']}`;
-            } else {
-                alert("找不到該筆資料");
-                window.location.href = 'admin.html';
-            }
-        });
-    } else {
+    // 送出中標記，避免重複點擊
+    let saving = false;
+
+    if (!inspectionId) {
         alert("缺少參數");
         window.location.href = 'admin.html';
+    } else {
+        loadRecord();
+    }
+
+    function loadRecord() {
+        fetch('get_inspections.php?id=' + encodeURIComponent(inspectionId))
+        .then(res => {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.json();
+        })
+        .then(record => {
+            document.getElementById('page-title').innerText = `${record['樓層']} 後樓梯 - 違規詳情`;
+            document.getElementById('detail-img').src = record['照片'];
+            document.getElementById('detail-img').alt = record['樓層'] + ' 違規照片';
+            document.getElementById('info-time').innerText = `上傳時間：${record['時間']}`;
+            document.getElementById('info-status').innerText = `處理狀態：${record['狀態']}`;
+
+            // radio 預設選中目前的狀態
+            document.querySelectorAll('input[name="status"]').forEach(radio => {
+                radio.checked = (radio.value === record['狀態']);
+            });
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            alert("載入失敗：" + err.message);
+            window.location.href = 'admin.html';
+        });
+    }
+
+    function updateStatus() {
+        if (saving) return;
+
+        const picked = document.querySelector('input[name="status"]:checked');
+        if (!picked) {
+            alert("請先選擇一個狀態");
+            return;
+        }
+
+        const btn = document.getElementById('btn-update');
+        saving = true;
+        btn.disabled = true;
+        btn.innerText = '更新中...';
+
+        const formData = new FormData();
+        formData.append('inspection_id', inspectionId);
+        formData.append('status', picked.value);
+
+        fetch('update_status.php', { method: 'POST', body: formData })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                document.getElementById('info-status').innerText = `處理狀態：${data.new_status}`;
+                alert("狀態已更新為：" + data.new_status);
+            } else {
+                alert("更新失敗：" + (data.message || '未知錯誤'));
+            }
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            alert("更新失敗，請檢查資料庫連線");
+        })
+        .finally(() => {
+            saving = false;
+            btn.disabled = false;
+            btn.innerText = '更新狀態';
+        });
+    }
+
+    function goPrint() {
+        window.location.href = 'print_notice.html?id=' + encodeURIComponent(inspectionId);
     }
 </script>
 </body>

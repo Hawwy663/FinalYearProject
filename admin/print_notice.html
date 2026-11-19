@@ -7,17 +7,23 @@
     <style>
         .header-bar { display: flex; align-items: center; margin-bottom: 20px; border-bottom: 2px solid lightgray; padding-bottom: 10px; }
         .back-btn { font-size: 30px; cursor: pointer; margin-right: 20px; color: dodgerblue;}
-        
+
         /* 模擬 A4 紙張大小的通知單 */
         .notice-paper { border: 2px dashed darkslategray; padding: 40px; background-color: white; max-width: 600px; margin: 0 auto; }
         .notice-title { text-align: center; padding: 15px; margin-bottom: 30px; font-weight: bold; font-size: 24px; border-bottom: 2px solid black; }
         .notice-content { padding: 15px; font-size: 18px; line-height: 2; margin-bottom: 20px; }
         .sign-off { padding: 10px 20px; display: inline-block; font-weight: bold; border: 1px solid gray; margin-top: 30px;}
         .print-btn-container { text-align: center; margin-top: 40px; }
-        
+
+        /* 限期設定列（列印時隱藏） */
+        .deadline-bar { max-width: 600px; margin: 0 auto 20px; padding: 15px; border: 1px solid lightgray; background-color: whitesmoke;
+                        display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .deadline-bar label { font-weight: bold; }
+        .deadline-bar input { padding: 8px; font-size: 16px; border: 1px solid gray; }
+
         @media print {
             body { background-color: white; padding: 0; }
-            .header-bar, .print-btn-container, .back-btn { display: none; }
+            .header-bar, .print-btn-container, .back-btn, .deadline-bar { display: none; }
             .notice-paper { border: none; padding: 0; }
         }
     </style>
@@ -25,18 +31,25 @@
 <body>
 <div class="container">
     <div class="header-bar">
-        <!-- 預計功能：返回詳情頁 -->
-        <div class="back-btn" onclick="window.location.href='record_detail.html'">⬅</div>
+        <!-- 返回詳情頁 -->
+        <div class="back-btn" onclick="goBack()">⬅</div>
         <h2 style="flex: 1; margin: 0; border: none; padding: 0;">通知單預覽</h2>
+    </div>
+
+    <!-- 清理限期設定：預設今日 +7 日，可改 -->
+    <div class="deadline-bar">
+        <label for="deadline">清理限期：</label>
+        <input type="date" id="deadline">
+        <span id="floor-label" style="color: darkslategray;">樓層：載入中...</span>
     </div>
 
     <div class="notice-paper">
         <div class="notice-title">後樓梯雜物清理通知</div>
-        
+
         <div class="notice-content">
             致 貴住戶：<br><br>
-            本大廈管理處在進行日常無人機巡查時，於後樓梯發現堆放雜物，阻礙逃生通道。<br><br>
-            請於 <b>2026年10月25日</b> 前將雜物清理完畢，以確保大廈消防安全。<br><br>
+            本大廈管理處在進行日常無人機巡查時，於 <b id="notice-floor">＿＿＿＿</b> 後樓梯發現堆放雜物，阻礙逃生通道。<br><br>
+            請於 <b id="notice-deadline">＿＿＿＿年＿＿月＿＿日</b> 前將雜物清理完畢，以確保大廈消防安全。<br><br>
             如限期過後仍未清理，管理處將保留追究權利，並交由相關政府部門處理。
         </div>
 
@@ -46,9 +59,92 @@
     </div>
 
     <div class="print-btn-container">
-        <!-- 預計功能：呼叫瀏覽器內建的列印功能，讓管理員印出實體紙張 -->
-        <button class="btn-cyan" style="font-size: 20px; padding: 15px 60px;" onclick="window.print()">🖨️ 確認列印</button>
+        <!-- 先將通知寫入資料庫，再呼叫瀏覽器列印 -->
+        <button class="btn-cyan" id="btn-print" style="font-size: 20px; padding: 15px 60px;" onclick="confirmPrint()">🖨️ 確認列印</button>
     </div>
 </div>
+
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const inspectionId = urlParams.get('id');
+
+    let record = null;
+
+    // 今日 +7 日作為預設清理限期
+    function defaultDeadline() {
+        const d = new Date();
+        d.setDate(d.getDate() + 7);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function formatDeadline(value) {
+        // value 是 YYYY-MM-DD，轉成「2026年10月25日」顯示在通知單上
+        const [y, m, d] = value.split('-');
+        return `${y}年${parseInt(m, 10)}月${parseInt(d, 10)}日`;
+    }
+
+    const deadlineInput = document.getElementById('deadline');
+    deadlineInput.value = defaultDeadline();
+    deadlineInput.addEventListener('change', () => {
+        document.getElementById('notice-deadline').innerText = deadlineInput.value ? formatDeadline(deadlineInput.value) : '＿＿＿＿年＿＿月＿＿日';
+    });
+
+    if (!inspectionId) {
+        alert("缺少參數：請由違規詳情頁面進入");
+        window.location.href = 'admin.html';
+    } else {
+        fetch('get_inspections.php?id=' + encodeURIComponent(inspectionId))
+        .then(res => {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.json();
+        })
+        .then(data => {
+            record = data;
+            document.getElementById('notice-floor').innerText = data['樓層'];
+            document.getElementById('floor-label').innerText = `樓層：${data['樓層']}　處理狀態：${data['狀態']}`;
+            document.getElementById('notice-deadline').innerText = formatDeadline(deadlineInput.value);
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            alert("載入失敗：" + err.message);
+            window.location.href = 'admin.html';
+        });
+    }
+
+    function confirmPrint() {
+        if (!inspectionId) return;
+
+        const btn = document.getElementById('btn-print');
+        btn.disabled = true;
+
+        const formData = new FormData();
+        formData.append('inspection_id', inspectionId);
+        formData.append('deadline', deadlineInput.value);
+
+        fetch('create_notice.php', { method: 'POST', body: formData })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // 登記成功後才列印
+                window.print();
+            } else {
+                alert("登記通知失敗：" + (data.message || '未知錯誤'));
+            }
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            alert("登記通知失敗，請檢查資料庫連線");
+        })
+        .finally(() => {
+            btn.disabled = false;
+        });
+    }
+
+    function goBack() {
+        window.location.href = inspectionId
+            ? 'record_detail.html?id=' + encodeURIComponent(inspectionId)
+            : 'admin.html';
+    }
+</script>
 </body>
 </html>

@@ -44,6 +44,11 @@
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
             
+            // 今日日期字串（YYYY-MM-DD），用來篩「今日上傳」
+            const now = new Date();
+            const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            const todayCount = data.filter(item => (item['時間'] || '').startsWith(todayStr)).length;
+
             let total = data.length;
             let violations = 0;
             let pending = 0;
@@ -59,7 +64,7 @@
             pending = violationList.filter(item => item['狀態'] === '待處理').length;
 
             // 更新頂部統計數字
-            document.getElementById('count-upload').innerText = total + "份";
+            document.getElementById('count-upload').innerText = todayCount + "份";
             document.getElementById('count-violation').innerText = violations + "宗";
             document.getElementById('count-pending').innerText = pending + "宗";
 
