@@ -136,6 +136,22 @@ await waitFor(cdp, `!!document.querySelector('.qr-cell img')`, 20000);
 await sleep(1500);
 await shot(cdp, path.join(OUT, '06-markers.png'));
 
+// AI 生成路線（收 API 費，預設唔跑；AI_DEMO=1 才開）
+if (process.env.AI_DEMO === '1') {
+  await evalJs(cdp, `(() => {
+    const el = document.querySelector('textarea.ai-input');
+    const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set;
+    setter.call(el, '一樓平台 1 同平台 2 都要巡查，跟住上二樓兩個平台，最後上三樓降落。每站前進 120cm，上樓 80cm。');
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    return true;
+  })()`);
+  await sleep(300);
+  await evalJs(cdp, `[...document.querySelectorAll('button')].find(b => b.innerText.includes('生成路線')).click()`);
+  await waitFor(cdp, `!!document.querySelector('.card table tbody tr')`, 120000);
+  await sleep(1200);
+  await shot(cdp, path.join(OUT, '07-ai-route.png'));
+}
+
 // 詳情頁（用有相片嘅 e2e 紀錄）
 const recordId = process.env.RECORD_ID;
 if (recordId) {

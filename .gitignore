@@ -31,3 +31,7 @@ shots/
 # 地面站執行時產生的檔案
 tools/drone/outbox.jsonl
 tools/drone/__pycache__/
+
+# Cloud Functions 本機測試用的環境變數（正式用 Secret Manager）
+functions/.env
+functions/.env.local

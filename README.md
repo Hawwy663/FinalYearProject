@@ -98,6 +98,43 @@ python aruco_nav.py --fly --takeoff --approach   # 真飛並飛近 marker（先�
 實測（`aruco_test.py`，8cm 黑格、fx=900）：0.5–3m 距離誤差 ≤ ±2.5%、橫向誤差 <1cm、
 可偵測上限約 3.5m。詳細見 `tools/drone/README.md`。
 
+## AI 生成路線（deepseek-flash）
+
+`/admin/markers` 上面有個輸入框：用一句話講路線，AI 會轉成「每站 zoneId / ArUco ID / 動作 / 位移(cm)」，
+撳「套用至系統」就寫入 Firestore `zones`，再重新產生貼紙即可。
+
+![AI 生成路線](docs/screenshots/07-ai-route.png)
+
+**架構（安全重點）**
+
+```
+瀏覽器 → Cloud Function generateRoute (asia-east1)
+        → DeepSeek API（key 存 Google Secret Manager）
+        → Firestore zones（Admin SDK，繞過 client rules）
+        → python tools/drone/gen_markers.py --from-firestore 重出貼紙
+```
+
+- **API key 唔會出現在前端**：只存 Secret Manager，前端只拿到已驗證的 JSON
+- 呼叫前檢查 `users/{uid}.role === 'admin'`，非管理員會被擋
+- AI 輸出有嚴格驗證：markerId 0–49 不重複、action 白名單、`nextZone` 必須存在、位移限制 ±300cm
+- 每次生成都寫 `routeLogs`（prompt / 結果 / token 用量），方便報告寫「用了多少 token」
+
+**部署 function**
+
+```powershell
+firebase functions:secrets:set DEEPSEEK_API_KEY --data-file key.txt   # 只需做一次
+firebase deploy --only functions
+```
+
+**改路線之後重新出貼紙**（需要一次性 service account）
+
+```powershell
+# 1. Firebase console → 專案設定 → 服務帳戶 → 產生新的私密金鑰
+# 2. 指向該 JSON
+$env:GOOGLE_APPLICATION_CREDENTIALS = "C:\path\serviceAccount.json"
+python tools/drone/gen_markers.py --from-firestore
+```
+
 ## 資料模型
 
 ```

@@ -1,0 +1,13 @@
+{
+  "name": "functions",
+  "description": "FYP cloud functionsï¼ˆDeepSeek è·¯ç·šç”Ÿæˆï¼‰",
+  "engines": {
+    "node": "22"
+  },
+  "main": "index.js",
+  "private": true,
+  "dependencies": {
+    "firebase-admin": "^13.0.2",
+    "firebase-functions": "^6.1.1"
+  }
+}

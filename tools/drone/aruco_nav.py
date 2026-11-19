@@ -182,25 +182,46 @@ def run(args: argparse.Namespace) -> int:
                     },
                 )
 
-            if not args.approach:
+            if not args.approach and not args.hop:
                 continue
 
-            forward, lateral = plan_step(tvec, args.stop_distance)
-            if forward == 0 and lateral == 0:
-                if first_time:
-                    print(f"  → 已到位（≤{args.stop_distance:.2f}m），HOLD")
-                continue
+            # ── 模式一：依 pose 閉環飛近 ──
+            if args.approach:
+                forward, lateral = plan_step(tvec, args.stop_distance)
+                if forward or lateral:
+                    print(f"  → 閉環：前進 {forward}cm、橫移 {lateral}cm")
+                    if args.fly:
+                        if lateral:
+                            source.tello.move_right(lateral) if lateral > 0 else source.tello.move_left(-lateral)
+                        if forward:
+                            source.tello.move_forward(forward)
+                        time.sleep(0.8)
+                elif first_time:
+                    print(f"  → 已到位（≤{args.stop_distance:.2f}m）")
 
-            print(f"  → 閉環：前進 {forward}cm、橫移 {lateral}cm")
-            if args.fly:
-                if lateral:
-                    source.tello.move_right(lateral) if lateral > 0 else source.tello.move_left(-lateral)
-                if forward:
-                    source.tello.move_forward(forward)
-                time.sleep(0.8)
-            else:
-                print("    （乾跑：唔會真的移動）")
-                time.sleep(0.5)
+            # ── 模式二：依 AI 生成的路線跳到下一站（zone.move）──
+            if args.hop:
+                move = zone.get("move") or {}
+                forward_cm = int(move.get("forward", 0))
+                right_cm = int(move.get("right", 0))
+                up_cm = int(move.get("up", 0))
+                if forward_cm or right_cm or up_cm:
+                    print(f"  → 跳站：前 {forward_cm}cm、右 {right_cm}cm、上 {up_cm}cm → {zone.get('nextZone') or '完結'}")
+                    if args.fly:
+                        # 一步一步做，每步之間停一停，出事可以即刻 Ctrl+C（會自動降落）
+                        if up_cm:
+                            source.tello.move_up(up_cm) if up_cm > 0 else source.tello.move_down(-up_cm)
+                            time.sleep(0.5)
+                        if forward_cm:
+                            source.tello.move_forward(forward_cm)
+                            time.sleep(0.5)
+                        if right_cm:
+                            source.tello.move_right(right_cm) if right_cm > 0 else source.tello.move_left(-right_cm)
+                            time.sleep(0.5)
+                if zone.get("action") == "LAND" and args.fly:
+                    print("  → LAND：降落")
+                    source.land()
+                    break
     finally:
         source.close()
         finish_run(db, run_id)
@@ -350,6 +371,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--fly", action="store_true", help="真飛（配合 --takeoff）")
     parser.add_argument("--takeoff", action="store_true")
     parser.add_argument("--approach", action="store_true", help="閉環飛近 marker（每次 ≤30cm）")
+    parser.add_argument("--hop", action="store_true", help="依 AI 生成路線的 move（前/右/上）跳去下一站")
     parser.add_argument("--stop-distance", type=float, default=0.7, help="停在距 marker 幾多米")
     parser.add_argument("--fx", type=float, default=DEFAULT_FX, help="相機焦距（像素），預設 900")
     parser.add_argument("--seconds", type=int, default=180)

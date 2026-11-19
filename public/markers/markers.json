@@ -9,7 +9,13 @@
       "seq": 1,
       "floor": "1樓",
       "label": "一樓平台 1",
-      "nextZone": "B1F01L2"
+      "action": "HOLD",
+      "nextZone": "B1F01L2",
+      "move": {
+        "forward": 120,
+        "right": 0,
+        "up": 0
+      }
     },
     {
       "zoneId": "B1F01L2",
@@ -17,7 +23,13 @@
       "seq": 2,
       "floor": "1樓",
       "label": "一樓平台 2",
-      "nextZone": "B1F02L1"
+      "action": "HOLD",
+      "nextZone": "B1F02L1",
+      "move": {
+        "forward": 120,
+        "right": 0,
+        "up": 80
+      }
     },
     {
       "zoneId": "B1F02L1",
@@ -25,7 +37,13 @@
       "seq": 3,
       "floor": "2樓",
       "label": "二樓平台 1",
-      "nextZone": "B1F02L2"
+      "action": "HOLD",
+      "nextZone": "B1F02L2",
+      "move": {
+        "forward": 120,
+        "right": 0,
+        "up": 0
+      }
     },
     {
       "zoneId": "B1F02L2",
@@ -33,7 +51,13 @@
       "seq": 4,
       "floor": "2樓",
       "label": "二樓平台 2",
-      "nextZone": "B1F03L1"
+      "action": "HOLD",
+      "nextZone": "B1F03L1",
+      "move": {
+        "forward": 120,
+        "right": 0,
+        "up": 80
+      }
     },
     {
       "zoneId": "B1F03L1",
@@ -41,7 +65,13 @@
       "seq": 5,
       "floor": "3樓",
       "label": "三樓平台 1",
-      "nextZone": "B1F03L2"
+      "action": "HOLD",
+      "nextZone": "B1F03L2",
+      "move": {
+        "forward": 120,
+        "right": 0,
+        "up": 0
+      }
     },
     {
       "zoneId": "B1F03L2",
@@ -49,7 +79,13 @@
       "seq": 6,
       "floor": "3樓",
       "label": "三樓平台 2",
-      "nextZone": ""
+      "action": "LAND",
+      "nextZone": "",
+      "move": {
+        "forward": 0,
+        "right": 0,
+        "up": 0
+      }
     }
   ]
 }
